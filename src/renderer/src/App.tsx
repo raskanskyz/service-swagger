@@ -1,34 +1,80 @@
-import Versions from './components/Versions'
-import electronLogo from './assets/electron.svg'
+import { useEffect, useState } from 'react'
+import { Spin, Tabs, ConfigProvider, theme } from 'antd'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { EnvironmentsContext } from './contexts/EnvironmentsContext'
+import SettingsPage from './pages/SettingsPage'
+
+const queryClient = new QueryClient()
 
 function App(): JSX.Element {
-  const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+  // const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+
+  const [envs, setEnvs] = useState<string[]>([])
+  const [selectedEnv, setSelectedEnv] = useState<string | null>(null)
+
+  const onChange = (env): void => {
+    window.electron.ipcRenderer.send('LOAD_TARGETS', env)
+    setSelectedEnv(env)
+  }
+
+  // * init selectedEnv
+  useEffect(() => {
+    if (envs?.length) {
+      setSelectedEnv(envs[0])
+    }
+  }, [envs?.length])
+
+  useEffect(() => {
+    window.electron.ipcRenderer.send('LOAD_ENVS')
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    window.electron.ipcRenderer.on('ENVS_UPDATED', (envs: any) => {
+      setEnvs(envs)
+      // setSelectedEnv(env)
+    })
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    window.electron.ipcRenderer.on('LOAD_ENVS', (envs: any) => {
+      setEnvs(envs)
+      // setSelectedEnv(env)
+    })
+  }, [])
+
+  if (envs === null) {
+    return <Spin fullscreen={true} />
+  }
+
+  const envTabs = envs.map((env) => ({
+    key: env,
+    label: env,
+    children: <>{/* <TargetsList env={env} /> */}</>
+  }))
 
   return (
-    <>
-      <img alt="logo" className="logo" src={electronLogo} />
-      <div className="creator">Powered by electron-vite</div>
-      <div className="text">
-        Build an Electron app with <span className="react">React</span>
-        &nbsp;and <span className="ts">TypeScript</span>
-      </div>
-      <p className="tip">
-        Please try pressing <code>F12</code> to open the devTool
-      </p>
-      <div className="actions">
-        <div className="action">
-          <a href="https://electron-vite.org/" target="_blank" rel="noreferrer">
-            Documentation
-          </a>
-        </div>
-        <div className="action">
-          <a target="_blank" rel="noreferrer" onClick={ipcHandle}>
-            Send IPC
-          </a>
-        </div>
-      </div>
-      <Versions></Versions>
-    </>
+    <ConfigProvider
+      theme={{
+        algorithm: theme.darkAlgorithm
+      }}
+    >
+      <QueryClientProvider client={queryClient}>
+        <EnvironmentsContext.Provider value={{ envs, selectedEnv }}>
+          <Tabs
+            defaultActiveKey="1"
+            items={[
+              ...envTabs,
+              {
+                key: 'settingsPage',
+                label: 'Settings',
+                children: <SettingsPage />
+              }
+            ]}
+            onChange={onChange}
+          />
+        </EnvironmentsContext.Provider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </ConfigProvider>
   )
 }
 
