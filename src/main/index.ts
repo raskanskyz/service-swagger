@@ -1,7 +1,8 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import icon from '../../resources/zoominfo.png?asset'
+import TrayGenerator from '../helpers/TrayGenerator'
 
 let mainWindow: BrowserWindow
 
@@ -11,8 +12,8 @@ function createMainWindow(): void {
     width: 350,
     height: 460,
     show: false,
-    frame: false, // TODO: verify
-    autoHideMenuBar: false, // TODO: verify
+    frame: false,
+    autoHideMenuBar: false,
     resizable: false,
     fullscreenable: false,
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -60,9 +61,10 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
-  app.whenReady().then(() => {
-    createMainWindow()
-  })
+  createMainWindow()
+
+  const Tray = new TrayGenerator(mainWindow)
+  Tray.createTray()
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
@@ -70,6 +72,8 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow()
   })
 })
+
+app.dock.hide()
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
