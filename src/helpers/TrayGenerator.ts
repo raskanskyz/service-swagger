@@ -7,13 +7,16 @@ import {
   nativeImage
 } from 'electron'
 import icon from '../../resources/zoominfo.png?asset'
+import ElectronStore from 'electron-store'
 
 export default class TrayGenerator {
   tray: Tray | null
   mainWindow: BrowserWindow
+  store: ElectronStore<Record<string, unknown>>
 
-  constructor(mainWindow: BrowserWindow) {
+  constructor(mainWindow: BrowserWindow, store: ElectronStore) {
     this.tray = null
+    this.store = store
     this.mainWindow = mainWindow
   }
   getWindowPosition = (): { x: number; y: number } => {
@@ -40,6 +43,12 @@ export default class TrayGenerator {
   }
   rightClickMenu = (): void => {
     const menu: (MenuItemConstructorOptions | MenuItem)[] = [
+      {
+        label: 'Launch at startup',
+        type: 'checkbox',
+        checked: this.store.get('launchAtStart') === 'true',
+        click: (event) => this.store.set('launchAtStart', event.checked)
+      },
       {
         role: 'quit',
         accelerator: 'Command+Q'

@@ -3,6 +3,13 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/zoominfo.png?asset'
 import TrayGenerator from '../helpers/TrayGenerator'
+import ElectronStore from 'electron-store'
+
+const schema: Record<string, unknown> = {
+  launchAtStart: true
+}
+
+const store = new ElectronStore(schema)
 
 let mainWindow: BrowserWindow
 
@@ -13,9 +20,8 @@ function createMainWindow(): void {
     height: 460,
     show: false,
     frame: false,
-    autoHideMenuBar: false,
-    resizable: false,
     fullscreenable: false,
+    resizable: false,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       devTools: is.dev,
@@ -23,10 +29,6 @@ function createMainWindow(): void {
       sandbox: false,
       nodeIntegration: true
     }
-  })
-
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -63,8 +65,12 @@ app.whenReady().then(() => {
 
   createMainWindow()
 
-  const Tray = new TrayGenerator(mainWindow)
+  const Tray = new TrayGenerator(mainWindow, store)
   Tray.createTray()
+
+  app.setLoginItemSettings({
+    openAtLogin: store.get('launchAtStart') === 'true'
+  })
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
@@ -72,8 +78,6 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow()
   })
 })
-
-app.dock.hide()
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
@@ -83,6 +87,8 @@ app.on('window-all-closed', () => {
     app.quit()
   }
 })
+
+app.dock.hide()
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
