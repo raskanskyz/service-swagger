@@ -4,6 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/zoominfo.png?asset'
 import TrayGenerator from '../helpers/TrayGenerator'
 import ElectronStore from 'electron-store'
+import { Target } from '../models'
 
 const schema: Record<string, unknown> = {
   launchAtStart: true
@@ -92,3 +93,62 @@ app.dock.hide()
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
+ipcMain.on('ENVS_UPDATED', (event, data) => {
+  console.log('🚀 DOZI ~ ipcMain.on ~ ENVS_UPDATED:', data)
+  store.set('environments', data)
+
+  event.reply('ENVS_UPDATED', store.get('environments'))
+})
+
+ipcMain.on('TARGET_ADDED', (event, { target, env }) => {
+  const storyKey = `targets.${env}`
+  const prevTargets = (store.get(storyKey) || []) as string[]
+
+  store.set(storyKey, [...prevTargets, { ...target, notifyChanges: true }])
+
+  event.reply('TARGET_ADDED', store.get(storyKey))
+})
+
+ipcMain.on('LOAD_ENVS', (event) => {
+  console.log("🚀 DOZI ~ ipcMain.on ~ store.get('environments', []):", store.get('environments'))
+  event.reply('LOAD_ENVS', store.get('environments', []))
+})
+
+ipcMain.on('LOAD_TARGETS', (event, env) => {
+  const storyKey = `targets.${env}`
+  event.reply('LOAD_TARGETS', store.get(storyKey))
+})
+
+ipcMain.on('ENV_DELETED', (event, env) => {
+  const storyKey = `targets.${env}`
+
+  store.delete(storyKey)
+})
+
+ipcMain.on('TARGET_DELETED', (event, { item, selectedEnv }) => {
+  const storyKey = `targets.${selectedEnv}`
+  const prevTargets = store.get<string>(storyKey) as Target[]
+
+  store.set(
+    storyKey,
+    prevTargets.filter((t) => t.name !== item.name)
+  )
+
+  event.reply('LOAD_TARGETS', store.get(storyKey))
+})
+
+ipcMain.on('NOTIFY_CHANGES_TOGGLED', (event, { item, selectedEnv }) => {
+  const storyKey = `targets.${selectedEnv}`
+  const selectedEnvTargets = store.get(storyKey) as Target[]
+  const updatedTargets = selectedEnvTargets.map((target) => {
+    if (target.name !== item.name) {
+      return target
+    }
+
+    return { ...target, notifyChanges: !item.notifyChanges }
+  })
+
+  store.set(storyKey, updatedTargets)
+
+  event.reply('LOAD_TARGETS', store.get(storyKey))
+})

@@ -6,7 +6,6 @@ import { EnvironmentsContext } from '../contexts/EnvironmentsContext'
 function EnvironmentTags(): JSX.Element {
   const { envs } = useContext(EnvironmentsContext)
   const { token } = theme.useToken()
-  const [tags, setTags] = useState(envs)
   const [inputVisible, setInputVisible] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const [editInputIndex, setEditInputIndex] = useState(-1)
@@ -24,14 +23,10 @@ function EnvironmentTags(): JSX.Element {
     editInputRef.current?.focus()
   }, [editInputValue])
 
-  useEffect(() => {
-    window.electron.ipcRenderer.send('ENVS_UPDATED', tags)
-  }, [tags])
-
   const handleClose = (removedTag): void => {
     window.electron.ipcRenderer.send('ENV_DELETED', removedTag)
-    const newTags = tags.filter((tag) => tag !== removedTag)
-    setTags(newTags)
+    const updatedEnvs = envs.filter((tag) => tag !== removedTag)
+    window.electron.ipcRenderer.send('ENVS_UPDATED', updatedEnvs)
   }
   const showInput = (): void => {
     setInputVisible(true)
@@ -40,8 +35,8 @@ function EnvironmentTags(): JSX.Element {
     setInputValue(e.target.value)
   }
   const handleInputConfirm = (): void => {
-    if (inputValue && !tags.includes(inputValue)) {
-      setTags([...tags, inputValue])
+    if (inputValue && !envs.includes(inputValue)) {
+      window.electron.ipcRenderer.send('ENVS_UPDATED', [...envs, inputValue])
     }
     setInputVisible(false)
     setInputValue('')
@@ -50,9 +45,9 @@ function EnvironmentTags(): JSX.Element {
     setEditInputValue(e.target.value)
   }
   const handleEditInputConfirm = (): void => {
-    const newTags = [...tags]
+    const newTags = [...envs]
     newTags[editInputIndex] = editInputValue
-    setTags(newTags)
+    window.electron.ipcRenderer.send('ENVS_UPDATED', newTags)
     setEditInputIndex(-1)
     setEditInputValue('')
   }
@@ -70,7 +65,7 @@ function EnvironmentTags(): JSX.Element {
 
   return (
     <Space size={[0, 8]} wrap>
-      {tags.map((tag, index) => {
+      {envs.map((tag, index) => {
         if (editInputIndex === index) {
           return (
             <Input

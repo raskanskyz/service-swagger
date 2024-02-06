@@ -4,40 +4,29 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { EnvironmentsContext } from './contexts/EnvironmentsContext'
 import SettingsPage from './pages/SettingsPage'
+import TargetsList from './components/TargetsList'
 
 const queryClient = new QueryClient()
 
 function App(): JSX.Element {
-  // const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
-
   const [envs, setEnvs] = useState<string[]>([])
-  const [selectedEnv, setSelectedEnv] = useState<string | null>(null)
+  const [selectedEnv, setSelectedEnv] = useState<string | undefined>()
 
   const onChange = (env): void => {
-    window.electron.ipcRenderer.send('LOAD_TARGETS', env)
     setSelectedEnv(env)
+    window.electron.ipcRenderer.send('LOAD_TARGETS', env)
   }
-
-  // * init selectedEnv
-  useEffect(() => {
-    if (envs?.length) {
-      setSelectedEnv(envs[0])
-    }
-  }, [envs?.length])
 
   useEffect(() => {
     window.electron.ipcRenderer.send('LOAD_ENVS')
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    window.electron.ipcRenderer.on('ENVS_UPDATED', (envs: any) => {
+    window.electron.ipcRenderer.on('ENVS_UPDATED', (_, envs: string[]) => {
       setEnvs(envs)
-      // setSelectedEnv(env)
     })
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    window.electron.ipcRenderer.on('LOAD_ENVS', (envs: any) => {
+    window.electron.ipcRenderer.on('LOAD_ENVS', (_, envs: string[]) => {
       setEnvs(envs)
-      // setSelectedEnv(env)
+      setSelectedEnv(envs[0])
     })
   }, [])
 
@@ -48,7 +37,7 @@ function App(): JSX.Element {
   const envTabs = envs.map((env) => ({
     key: env,
     label: env,
-    children: <>{/* <TargetsList env={env} /> */}</>
+    children: <TargetsList />
   }))
 
   return (
@@ -61,6 +50,7 @@ function App(): JSX.Element {
         <EnvironmentsContext.Provider value={{ envs, selectedEnv }}>
           <Tabs
             defaultActiveKey="1"
+            activeKey={selectedEnv}
             items={[
               ...envTabs,
               {

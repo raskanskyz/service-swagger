@@ -1,6 +1,9 @@
 import { createContext } from 'react'
 
-export const EnvironmentsContext = createContext<{ envs: string[]; selectedEnv: string | null }>({
+export const EnvironmentsContext = createContext<{
+  envs: string[]
+  selectedEnv: string | undefined
+}>({
   envs: [],
-  selectedEnv: null
+  selectedEnv: undefined
 })

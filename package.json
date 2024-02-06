@@ -28,7 +28,8 @@
     "@tanstack/react-query-devtools": "^5.18.1",
     "antd": "^5.14.0",
     "electron-store": "^8.1.0",
-    "electron-updater": "^6.1.7"
+    "electron-updater": "^6.1.7",
+    "prop-types": "^15.8.1"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^2.0.0",
