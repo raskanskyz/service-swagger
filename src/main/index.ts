@@ -91,6 +91,7 @@ app.on('window-all-closed', () => {
 
 app.dock.hide()
 
+console.log('🚀 DOZI ~ store.store:', JSON.stringify(store.store, null, 2))
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
 ipcMain.on('ENVS_UPDATED', (event, data) => {

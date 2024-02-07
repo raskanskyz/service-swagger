@@ -31,10 +31,10 @@ function NewTargetForm(): JSX.Element {
       </Form.Item>
       <Form.Item
         label="Url"
-        name="url"
-        rules={[{ required: true, message: 'Please input the target url!' }]}
+        name="endpoint"
+        rules={[{ required: true, message: 'Please input the target endpoint!' }]}
       >
-        <Input placeholder="url" />
+        <Input placeholder="endpoint" />
       </Form.Item>
       <Form.Item>
         <Button type="primary" htmlType="submit">

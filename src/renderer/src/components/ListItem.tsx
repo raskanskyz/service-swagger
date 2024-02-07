@@ -20,11 +20,11 @@ function ListItem({ item }): JSX.Element {
   const cancel = (): boolean => false
 
   const { isPending, isError, isSuccess } = useQuery({
-    queryKey: ['target', item.url],
+    queryKey: ['target', item.endpoint],
     refetchInterval: 5 * 1000, // TODO: configurable
     retry: 2,
     queryFn: async () => {
-      const response = await fetch(item.url)
+      const response = await fetch(item.endpoint)
       if (!response.ok) {
         throw new Error('Network response was not ok')
       }
@@ -101,7 +101,7 @@ function ListItem({ item }): JSX.Element {
         title={
           <>
             {badgeRenderer(status)}
-            <Tooltip title={item.url}>
+            <Tooltip title={item.endpoint}>
               <span>{item?.name}</span>
             </Tooltip>
           </>
@@ -122,7 +122,7 @@ function ListItem({ item }): JSX.Element {
 ListItem.propTypes = {
   item: PropTypes.shape({
     name: PropTypes.string.isRequired,
-    url: PropTypes.string.isRequired,
+    endpoint: PropTypes.string.isRequired,
     notifyChanges: PropTypes.bool,
     version: PropTypes.string
   })
