@@ -5,11 +5,12 @@ import NewTargetForm from '../components/NewTargetForm'
 import { Spin } from 'antd'
 import { PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons'
 import { EnvironmentsContext } from '../contexts/EnvironmentsContext'
+import { Target } from '../../../models'
 
 const { Text } = Typography
 
 function TargetsList(): JSX.Element {
-  const [targets, setTargets] = useState()
+  const [targets, setTargets] = useState<Target[]>()
   const [showNewTargetForm, setShowNewTargetForm] = useState(false)
   const { selectedEnv } = useContext(EnvironmentsContext)
 
