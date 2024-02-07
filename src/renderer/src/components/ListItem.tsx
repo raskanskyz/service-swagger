@@ -19,7 +19,7 @@ function ListItem({ item }): JSX.Element {
   }
   const cancel = (): boolean => false
 
-  const { isPending, isError, isSuccess } = useQuery({
+  const { isFetching, isError, isSuccess } = useQuery({
     queryKey: ['target', item.endpoint],
     refetchInterval: 5 * 1000, // TODO: configurable
     retry: 2,
@@ -63,10 +63,10 @@ function ListItem({ item }): JSX.Element {
       setVersion(item.version)
     }
 
-    if (isPending) {
+    if (isFetching) {
       setStatus('processing')
     }
-  }, [isSuccess, isError, isPending, status, item.version])
+  }, [isSuccess, isError, isFetching, status, item.version])
 
   const badgeRenderer = (status: BadgeStatus = 'processing'): JSX.Element => {
     return (
