@@ -6,8 +6,9 @@ import {
   MenuItemConstructorOptions,
   nativeImage
 } from 'electron'
-import icon from '../../resources/zoominfo.png?asset'
 import ElectronStore from 'electron-store'
+
+import icon from '../../resources/podcast.png?asset'
 
 export default class TrayGenerator {
   tray: Tray | null

@@ -47,15 +47,12 @@ function App(): JSX.Element {
           queryFn: async (): Promise<Response> => {
             try {
               const response = await fetch(t.endpoint, { method: t.method })
-              window.electron.ipcRenderer.send('POLLED', t.name)
               if (!response.ok) {
-                window.electron.ipcRenderer.send('POLLED', t.name)
                 throw new Error('Network response was not ok')
               }
 
               return response.json()
             } catch (error) {
-              window.electron.ipcRenderer.send('POLLED', t.name)
               throw new Error('Network response was not ok')
             }
           }

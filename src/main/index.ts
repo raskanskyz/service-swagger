@@ -1,9 +1,10 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
-import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/zoominfo.png?asset'
-import TrayGenerator from '../helpers/TrayGenerator'
+import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import ElectronStore from 'electron-store'
+import { join } from 'path'
+
+import icon from '../../resources/podcast.png?asset'
+import TrayGenerator from '../helpers/TrayGenerator'
 import { Target } from '../models'
 
 const schema: Record<string, unknown> = {
@@ -83,6 +84,30 @@ app.whenReady().then(() => {
     if (!store.has('targets')) {
       store.set('targets', {})
     }
+    // store.store = {
+    //   environments: ['federation'],
+    //   targets: {
+    //     federation: [
+    //       {
+    //         name: 'router',
+    //         endpoint:
+    //           'https://search-connector-search-facade-pr156.zios-apps-primary.stg.zi-int.com/graphql',
+    //         notifyChanges: true
+    //       },
+    //       {
+    //         name: 'org-import subgraph',
+    //         endpoint: 'http://org-import-ui-pr403.zios-apps-primary.stg.zi-int.com/readiness_check',
+    //         notifyChanges: true
+    //       },
+    //       {
+    //         name: 'search-connector subgraph',
+    //         endpoint:
+    //           'http://search-connector-search-facade-pr133.zios-apps-primary.stg.zi-int.com/readiness_check',
+    //         notifyChanges: true
+    //       }
+    //     ]
+    //   }
+    // }
     mainWindow.webContents.send('store:load', store.store)
   })
 })
@@ -149,6 +174,12 @@ ipcMain.on('notify:updated', (event, { item, selectedEnv }) => {
   })
 
   store.set(storyKey, updatedTargets)
+
+  event.reply('store:load', store.store)
+})
+
+ipcMain.on('store:set', (event, config) => {
+  store.store = JSON.parse(config)
 
   event.reply('store:load', store.store)
 })
