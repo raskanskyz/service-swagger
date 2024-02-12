@@ -1,43 +1,80 @@
 import { useEffect, useState } from 'react'
 import { Spin, Tabs, ConfigProvider, theme } from 'antd'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { useQueries } from '@tanstack/react-query'
 import { EnvironmentsContext } from './contexts/EnvironmentsContext'
 import SettingsPage from './pages/SettingsPage'
 import TargetsList from './components/TargetsList'
-
-const queryClient = new QueryClient()
+import { Target } from '../../models'
+import { QueriesContext } from './contexts/QueriesContext'
 
 function App(): JSX.Element {
-  const [envs, setEnvs] = useState<string[]>([])
-  const [selectedEnv, setSelectedEnv] = useState<string | undefined>()
+  const [store, setStore] = useState<{
+    environments: string[]
+    targets: Record<string, Target[]>
+  }>()
+  const [allTargets, setAllTargets] = useState<Target[]>([])
+  const [selectedEnv, setSelectedEnv] = useState<string>('')
+
+  // * load store
+  useEffect(() => {
+    window.electron.ipcRenderer.on(
+      'store:load',
+      (
+        _,
+        { environments, targets }: { environments: string[]; targets: Record<string, Target[]> }
+      ) => {
+        setStore({ environments, targets })
+        setAllTargets(Object.values(targets).flatMap((i) => i))
+      }
+    )
+  }, [])
+
+  // * set default env in initial render
+  useEffect(() => {
+    if (!selectedEnv && store?.environments?.length) {
+      setSelectedEnv(store.environments[0])
+    }
+  }, [store])
+
+  // * register all targets
+  const results = useQueries({
+    queries: allTargets
+      ? allTargets.map((t) => ({
+          queryKey: [t.name],
+          refetchInterval: t.interval ?? 5 * 1000, // TODO: configurable
+          refetchIntervalInBackground: true,
+          retry: 2,
+          queryFn: async (): Promise<Response> => {
+            try {
+              const response = await fetch(t.endpoint, { method: t.method })
+              window.electron.ipcRenderer.send('POLLED', t.name)
+              if (!response.ok) {
+                window.electron.ipcRenderer.send('POLLED', t.name)
+                throw new Error('Network response was not ok')
+              }
+
+              return response.json()
+            } catch (error) {
+              window.electron.ipcRenderer.send('POLLED', t.name)
+              throw new Error('Network response was not ok')
+            }
+          }
+        }))
+      : []
+  })
 
   const onChange = (env): void => {
     setSelectedEnv(env)
-    window.electron.ipcRenderer.send('LOAD_TARGETS', env)
   }
 
-  useEffect(() => {
-    window.electron.ipcRenderer.send('LOAD_ENVS')
-
-    window.electron.ipcRenderer.on('ENVS_UPDATED', (_, envs: string[]) => {
-      setEnvs(envs)
-    })
-
-    window.electron.ipcRenderer.on('LOAD_ENVS', (_, envs: string[]) => {
-      setEnvs(envs)
-      setSelectedEnv(envs[0])
-    })
-  }, [])
-
-  if (envs === null) {
+  if (!store?.environments) {
     return <Spin fullscreen={true} />
   }
 
-  const envTabs = envs.map((env) => ({
+  const envTabs = store.environments.map((env) => ({
     key: env,
     label: env,
-    children: <TargetsList />
+    children: <TargetsList targets={store.targets[env]} />
   }))
 
   return (
@@ -46,11 +83,11 @@ function App(): JSX.Element {
         algorithm: theme.darkAlgorithm
       }}
     >
-      <QueryClientProvider client={queryClient}>
-        <EnvironmentsContext.Provider value={{ envs, selectedEnv }}>
+      <EnvironmentsContext.Provider value={{ envs: store.environments, selectedEnv }}>
+        <QueriesContext.Provider value={{ results }}>
           <Tabs
-            defaultActiveKey="1"
-            activeKey={selectedEnv}
+            defaultActiveKey="settingsPage"
+            activeKey={selectedEnv || 'settingsPage'}
             items={[
               ...envTabs,
               {
@@ -61,9 +98,8 @@ function App(): JSX.Element {
             ]}
             onChange={onChange}
           />
-        </EnvironmentsContext.Provider>
-        <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
+        </QueriesContext.Provider>
+      </EnvironmentsContext.Provider>
     </ConfigProvider>
   )
 }

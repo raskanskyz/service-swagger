@@ -41,7 +41,7 @@ function createMainWindow(): void {
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
-    mainWindow.webContents.openDevTools({ mode: 'detach' })
+    // mainWindow.webContents.openDevTools({ mode: 'detach' })
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
@@ -61,9 +61,6 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
-
   createMainWindow()
 
   const Tray = new TrayGenerator(mainWindow, store)
@@ -78,6 +75,16 @@ app.whenReady().then(() => {
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow()
   })
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    if (!store.has('environments')) {
+      store.set('environments', [])
+    }
+    if (!store.has('targets')) {
+      store.set('targets', {})
+    }
+    mainWindow.webContents.send('store:load', store.store)
+  })
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -88,45 +95,24 @@ app.on('window-all-closed', () => {
     app.quit()
   }
 })
-
+// store.clear()
 app.dock.hide()
-
 console.log('🚀 DOZI ~ store.store:', JSON.stringify(store.store, null, 2))
+
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
-ipcMain.on('ENVS_UPDATED', (event, data) => {
-  console.log('🚀 DOZI ~ ipcMain.on ~ ENVS_UPDATED:', data)
-  store.set('environments', data)
 
-  event.reply('ENVS_UPDATED', store.get('environments'))
-})
-
-ipcMain.on('TARGET_ADDED', (event, { target, env }) => {
+ipcMain.on('target:added', (event, { target, env }) => {
   const storyKey = `targets.${env}`
   const prevTargets = (store.get(storyKey) || []) as string[]
 
   store.set(storyKey, [...prevTargets, { ...target, notifyChanges: true }])
 
-  event.reply('TARGET_ADDED', store.get(storyKey))
+  console.log('🚀 DOZI ~ ipcMain.on ~ target:added:', store.store)
+  event.reply('store:load', store.store)
 })
 
-ipcMain.on('LOAD_ENVS', (event) => {
-  console.log("🚀 DOZI ~ ipcMain.on ~ store.get('environments', []):", store.get('environments'))
-  event.reply('LOAD_ENVS', store.get('environments', []))
-})
-
-ipcMain.on('LOAD_TARGETS', (event, env) => {
-  const storyKey = `targets.${env}`
-  event.reply('LOAD_TARGETS', store.get(storyKey))
-})
-
-ipcMain.on('ENV_DELETED', (event, env) => {
-  const storyKey = `targets.${env}`
-
-  store.delete(storyKey)
-})
-
-ipcMain.on('TARGET_DELETED', (event, { item, selectedEnv }) => {
+ipcMain.on('target:deleted', (event, { item, selectedEnv }) => {
   const storyKey = `targets.${selectedEnv}`
   const prevTargets = store.get<string>(storyKey) as Target[]
 
@@ -135,10 +121,23 @@ ipcMain.on('TARGET_DELETED', (event, { item, selectedEnv }) => {
     prevTargets.filter((t) => t.name !== item.name)
   )
 
-  event.reply('LOAD_TARGETS', store.get(storyKey))
+  console.log('🚀 DOZI ~ ipcMain.on ~ target:deleted:', store.store)
+  event.reply('store:load', store.store)
 })
 
-ipcMain.on('NOTIFY_CHANGES_TOGGLED', (event, { item, selectedEnv }) => {
+ipcMain.on('tags:updated', (event, tags) => {
+  const existingTags: string[] = store.get('environments') as string[]
+  for (const eTag of existingTags) {
+    if (!tags.includes(eTag)) {
+      store.delete(`targets.${eTag}`)
+    }
+  }
+  store.set('environments', tags)
+
+  event.reply('store:load', store.store)
+})
+
+ipcMain.on('notify:updated', (event, { item, selectedEnv }) => {
   const storyKey = `targets.${selectedEnv}`
   const selectedEnvTargets = store.get(storyKey) as Target[]
   const updatedTargets = selectedEnvTargets.map((target) => {
@@ -151,5 +150,5 @@ ipcMain.on('NOTIFY_CHANGES_TOGGLED', (event, { item, selectedEnv }) => {
 
   store.set(storyKey, updatedTargets)
 
-  event.reply('LOAD_TARGETS', store.get(storyKey))
+  event.reply('store:load', store.store)
 })

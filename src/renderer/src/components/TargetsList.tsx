@@ -1,33 +1,19 @@
-import { useContext, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { List, Button, Typography } from 'antd'
 import ListItem from '../components/ListItem'
 import NewTargetForm from '../components/NewTargetForm'
-import { Spin } from 'antd'
 import { PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons'
-import { EnvironmentsContext } from '../contexts/EnvironmentsContext'
 import { Target } from '../../../models'
+import PropTypes from 'prop-types'
 
 const { Text } = Typography
 
-function TargetsList(): JSX.Element {
-  const [targets, setTargets] = useState<Target[]>()
+function TargetsList({ targets }): JSX.Element {
   const [showNewTargetForm, setShowNewTargetForm] = useState(false)
-  const { selectedEnv } = useContext(EnvironmentsContext)
 
-  useEffect(() => {
-    window.electron.ipcRenderer.send('LOAD_TARGETS', selectedEnv)
-
-    window.electron.ipcRenderer.on('LOAD_TARGETS', (_, payload) => {
-      setTargets(payload ?? [])
-    })
-    window.electron.ipcRenderer.on('TARGET_ADDED', (_, targets) => {
-      setTargets(targets)
-      setShowNewTargetForm(false)
-    })
-  }, [])
-
-  if (targets === undefined) {
-    return <Spin fullscreen={true} />
+  const onFinish = (target, env): void => {
+    window.electron.ipcRenderer.send('target:added', { target, env })
+    setShowNewTargetForm(!showNewTargetForm)
   }
 
   return (
@@ -39,13 +25,24 @@ function TargetsList(): JSX.Element {
       >
         <Text>{showNewTargetForm ? 'cancel' : 'add target'}</Text>
       </Button>
-      {showNewTargetForm && <NewTargetForm />}
+      {showNewTargetForm && <NewTargetForm onFinish={onFinish} />}
       <List
         itemLayout="horizontal"
         dataSource={targets}
-        renderItem={(item) => <ListItem item={item} />}
+        renderItem={(item: Target) => <ListItem item={item} />}
       />
     </>
+  )
+}
+
+TargetsList.propTypes = {
+  targets: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      endpoint: PropTypes.string.isRequired,
+      notifyChanges: PropTypes.bool,
+      version: PropTypes.string
+    })
   )
 }
 

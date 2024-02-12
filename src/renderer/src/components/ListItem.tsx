@@ -1,6 +1,6 @@
 import { useContext, useState, useEffect } from 'react'
 import { List, Badge, Switch, Typography, Popconfirm, Tooltip } from 'antd'
-import { useQuery } from '@tanstack/react-query'
+import { QueryObserver, useQueryClient } from '@tanstack/react-query'
 import PropTypes from 'prop-types'
 
 import { EnvironmentsContext } from '../contexts/EnvironmentsContext'
@@ -14,59 +14,51 @@ function ListItem({ item }): JSX.Element {
   const [status, setStatus] = useState<BadgeStatus>('processing')
   const [version, setVersion] = useState(null)
 
-  const confirm = (): void => {
-    window.electron.ipcRenderer.send('TARGET_DELETED', { item, selectedEnv })
-  }
-  const cancel = (): boolean => false
-
-  const { isFetching, isError, isSuccess } = useQuery({
-    queryKey: ['target', item.endpoint],
-    refetchInterval: 5 * 1000, // TODO: configurable
-    retry: 2,
-    queryFn: async () => {
-      const response = await fetch(item.endpoint)
-      if (!response.ok) {
-        throw new Error('Network response was not ok')
-      }
-
-      return response.json()
-    }
-  })
+  const queryClient = useQueryClient()
+  const observer = new QueryObserver(queryClient, { queryKey: [item.name] })
 
   useEffect(() => {
-    if (isSuccess) {
-      setStatus('success')
-    }
+    const unsubscribe = observer.subscribe(({ isFetching, isError, isSuccess }) => {
+      if (isError) {
+        setStatus('error')
+      }
+      if (isSuccess) {
+        setStatus('success')
+      }
+      if (isFetching) {
+        setStatus('processing')
+      }
+      // * transition from up to down
+      if (item.notifyChanges && isError && status === 'success') {
+        new Notification(`${item.name} is down!`, {
+          body: `service has been down for approx. 10 seconds`
+        })
+      }
 
-    if (isError) {
-      setStatus('error')
-    }
+      // * transition from down to up
+      if (item.notifyChanges && isSuccess && status === 'error') {
+        new Notification(`${item.name} is back up!`)
+      }
 
-    // * transition from up to down
-    if (item.notifyChanges && isError && status === 'success') {
-      new Notification(`${item.name} is down!`, {
-        body: `service has been down for approx. 10 seconds`
-      })
-    }
+      // * notify when version updated
+      if (version && item.version && version !== item.version) {
+        new Notification('version updated!', {
+          body: `service went from ${version} to ${item.version}`
+        })
 
-    // * transition from down to up
-    if (item.notifyChanges && isSuccess && status === 'error') {
-      new Notification(`${item.name} is back up!`)
-    }
+        setVersion(item.version)
+      }
+    })
 
-    // * notify when version updated
-    if (version && item.version && version !== item.version) {
-      new Notification('version updated!', {
-        body: `service went from ${version} to ${item.version}`
-      })
-
-      setVersion(item.version)
+    return () => {
+      unsubscribe()
     }
+  }, [selectedEnv])
 
-    if (isFetching) {
-      setStatus('processing')
-    }
-  }, [isSuccess, isError, isFetching, status, item.version])
+  const confirm = (): void => {
+    window.electron.ipcRenderer.send('target:deleted', { item, selectedEnv })
+  }
+  const cancel = (): boolean => false
 
   const badgeRenderer = (status: BadgeStatus = 'processing'): JSX.Element => {
     return (
@@ -111,9 +103,7 @@ function ListItem({ item }): JSX.Element {
       <Switch
         checked={item?.notifyChanges}
         size="small"
-        onChange={() =>
-          window.electron.ipcRenderer.send('NOTIFY_CHANGES_TOGGLED', { item, selectedEnv })
-        }
+        onChange={() => window.electron.ipcRenderer.send('notify:updated', { item, selectedEnv })}
       />
     </List.Item>
   )

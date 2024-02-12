@@ -24,9 +24,8 @@ function EnvironmentTags(): JSX.Element {
   }, [editInputValue])
 
   const handleClose = (removedTag): void => {
-    window.electron.ipcRenderer.send('ENV_DELETED', removedTag)
     const updatedEnvs = envs.filter((tag) => tag !== removedTag)
-    window.electron.ipcRenderer.send('ENVS_UPDATED', updatedEnvs)
+    window.electron.ipcRenderer.send('tags:updated', updatedEnvs)
   }
   const showInput = (): void => {
     setInputVisible(true)
@@ -36,7 +35,7 @@ function EnvironmentTags(): JSX.Element {
   }
   const handleInputConfirm = (): void => {
     if (inputValue && !envs.includes(inputValue)) {
-      window.electron.ipcRenderer.send('ENVS_UPDATED', [...envs, inputValue])
+      window.electron.ipcRenderer.send('tags:updated', [...envs, inputValue])
     }
     setInputVisible(false)
     setInputValue('')
@@ -47,7 +46,7 @@ function EnvironmentTags(): JSX.Element {
   const handleEditInputConfirm = (): void => {
     const newTags = [...envs]
     newTags[editInputIndex] = editInputValue
-    window.electron.ipcRenderer.send('ENVS_UPDATED', newTags)
+    window.electron.ipcRenderer.send('tags:updated', newTags)
     setEditInputIndex(-1)
     setEditInputValue('')
   }

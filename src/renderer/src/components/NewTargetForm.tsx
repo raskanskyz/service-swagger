@@ -1,12 +1,9 @@
 import { useContext } from 'react'
 import { Button, Form, Input } from 'antd'
 import { EnvironmentsContext } from '../contexts/EnvironmentsContext'
+import PropTypes from 'prop-types'
 
-const onFinish = (target, env): void => {
-  window.electron.ipcRenderer.send('TARGET_ADDED', { target, env })
-}
-
-function NewTargetForm(): JSX.Element {
+function NewTargetForm({ onFinish }): JSX.Element {
   const { selectedEnv } = useContext(EnvironmentsContext)
   const [form] = Form.useForm()
 
@@ -20,7 +17,6 @@ function NewTargetForm(): JSX.Element {
         layout: 'vertical'
       }}
       onFinish={(target) => onFinish(target, selectedEnv)}
-      style={{}}
     >
       <Form.Item
         label="Name"
@@ -43,6 +39,10 @@ function NewTargetForm(): JSX.Element {
       </Form.Item>
     </Form>
   )
+}
+
+NewTargetForm.propTypes = {
+  onFinish: PropTypes.func.isRequired
 }
 
 export default NewTargetForm
