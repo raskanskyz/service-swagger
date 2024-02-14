@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Spin, Tabs, ConfigProvider, theme } from 'antd'
-import { useQueries } from '@tanstack/react-query'
+import { useQueries, useQueryClient } from '@tanstack/react-query'
 import { EnvironmentsContext } from './contexts/EnvironmentsContext'
 import SettingsPage from './pages/SettingsPage'
 import TargetsList from './components/TargetsList'
@@ -14,6 +14,7 @@ function App(): JSX.Element {
   }>()
   const [allTargets, setAllTargets] = useState<Target[]>([])
   const [selectedEnv, setSelectedEnv] = useState<string>('')
+  const queryClient = useQueryClient()
 
   // * load store
   useEffect(() => {
@@ -45,14 +46,39 @@ function App(): JSX.Element {
           refetchIntervalInBackground: true,
           retry: 2,
           queryFn: async (): Promise<Response> => {
+            const prevData: Record<string, unknown> | undefined = queryClient.getQueryData([t.name])
             try {
-              const response = await fetch(t.endpoint, { method: t.method })
+              const response = await fetch(t.endpoint, {
+                method: t.method ?? 'GET'
+              })
               if (!response.ok) {
                 throw new Error('Network response was not ok')
               }
 
+              // * transition from down to up
+              if (!prevData && t.notifyChanges) {
+                new Notification(t.name, { body: `${t.name} is UP!` })
+              }
+
+              // * notify when version updated
+              if (t.version && t.version !== prevData?.version) {
+                new Notification('version updated!', {
+                  body: `service went from ${prevData?.version} to ${t.version}`
+                })
+              }
+
               return response.json()
             } catch (error) {
+              // * transition from up to down
+              if (!prevData?.hasFailedBefore) {
+                const hasFailedBefore = true
+                queryClient.setQueryData([t.name], { hasFailedBefore })
+
+                if (t.notifyChanges) {
+                  new Notification(t.name, { body: `${t.name} is DOWN!` })
+                }
+              }
+
               throw new Error('Network response was not ok')
             }
           }
@@ -71,6 +97,7 @@ function App(): JSX.Element {
   const envTabs = store.environments.map((env) => ({
     key: env,
     label: env,
+    forceRender: true,
     children: <TargetsList targets={store.targets[env]} />
   }))
 

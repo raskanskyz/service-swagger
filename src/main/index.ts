@@ -29,7 +29,8 @@ function createMainWindow(): void {
       devTools: is.dev,
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
-      nodeIntegration: true
+      nodeIntegration: true,
+      webSecurity: false
     }
   })
 

@@ -28,24 +28,8 @@ function ListItem({ item }): JSX.Element {
       if (isFetching) {
         setStatus('processing')
       }
-      // * transition from up to down
-      if (item.notifyChanges && isError && status === 'success') {
-        new Notification(`${item.name} is down!`, {
-          body: `service has been down for approx. 10 seconds`
-        })
-      }
 
-      // * transition from down to up
-      if (item.notifyChanges && isSuccess && status === 'error') {
-        new Notification(`${item.name} is back up!`)
-      }
-
-      // * notify when version updated
       if (version && item.version && version !== item.version) {
-        new Notification('version updated!', {
-          body: `service went from ${version} to ${item.version}`
-        })
-
         setVersion(item.version)
       }
     })
