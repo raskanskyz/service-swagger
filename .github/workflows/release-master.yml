@@ -60,7 +60,7 @@ jobs:
 
       - name: 🔨 Build Package
         run: |
-          npm run build
+          npm run build:ci
 
       - name: Extract version from package.json
         id: get_version
