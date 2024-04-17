@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.2](https://github.com/raskanskyz/service-swagger/compare/v1.1.1...v1.1.2) (2024-04-17)
+
+
+### Bug Fixes
+
+* add dmg-license ([004bc18](https://github.com/raskanskyz/service-swagger/commit/004bc185049be9383c2ea0c547eb565cd61bb216))
+* run actions on macos-latest ([2065ef3](https://github.com/raskanskyz/service-swagger/commit/2065ef3028d2ee1114a176144830ad08178375e9))
+
 ### [1.1.1](https://github.com/raskanskyz/service-swagger/compare/v1.1.0...v1.1.1) (2024-04-17)
 
 
