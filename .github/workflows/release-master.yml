@@ -20,12 +20,16 @@ jobs:
 
     steps:
       - name: 📀 Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
       - name: 🧪 Check out repository code
         uses: ./.github/workflows/health-check
+        with:
+          run-tests: false
+          run-lint: true
+          run-build: true
 
   release:
     name: 📦 Release Version
@@ -39,7 +43,7 @@ jobs:
 
     steps:
       - name: 📀 Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
