@@ -49,14 +49,14 @@ jobs:
 
       - name: 🗃️ Install Node.js Deps
         run: |
-          npm install --legacy-peer-deps
+          npm ci --no-audit --no-fund --no-progress
 
       - name: Create a new version, update CHANGELOG.md
         run: |
           git config --global user.email "github-actions[bot]@gmail.com"
           git config --global user.name "github-actions[bot]"
           npx standard-version
-          git push --follow-tags origin master
+          git push --follow-tags origin main
 
       - name: 🔨 Build Package
         run: |
