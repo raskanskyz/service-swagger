@@ -90,4 +90,4 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./service-swagger-${{ steps.get_version.outputs.version }}.dmg
           asset_name: service-swagger-${{ steps.get_version.outputs.version }}.dmg
-          asset_content_type: application/x-diskcopy
+          asset_content_type: application/octet-stream
