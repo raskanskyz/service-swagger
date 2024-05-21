@@ -41,12 +41,14 @@ function App(): JSX.Element {
   const results = useQueries({
     queries: allTargets
       ? allTargets.map((t) => ({
-          queryKey: [t.name],
+          queryKey: [t.endpoint],
           refetchInterval: t.interval ?? 5 * 1000, // TODO: configurable
           refetchIntervalInBackground: true,
           retry: 2,
           queryFn: async (): Promise<Response> => {
-            const prevData: Record<string, unknown> | undefined = queryClient.getQueryData([t.name])
+            const prevData: Record<string, unknown> | undefined = queryClient.getQueryData([
+              t.endpoint
+            ])
             try {
               const response = await fetch(t.endpoint, {
                 method: t.method ?? 'GET'
@@ -60,19 +62,25 @@ function App(): JSX.Element {
                 new Notification(t.name, { body: `${t.name} is UP!` })
               }
 
+              const res = await response.json()
+
+              if (res.version) {
+                queryClient.setQueryData([t.endpoint], { version: res.version })
+              }
+
               // * notify when version updated
-              if (t.version && t.version !== prevData?.version) {
+              if (res.version && res.version !== prevData?.version) {
                 new Notification('version updated!', {
-                  body: `service went from ${prevData?.version} to ${t.version}`
+                  body: `service went from ${prevData?.version} to ${res.version}`
                 })
               }
 
-              return response.json()
+              return res
             } catch (error) {
               // * transition from up to down
               if (!prevData?.hasFailedBefore) {
                 const hasFailedBefore = true
-                queryClient.setQueryData([t.name], { hasFailedBefore })
+                queryClient.setQueryData([t.endpoint], { hasFailedBefore })
 
                 if (t.notifyChanges) {
                   new Notification(t.name, { body: `${t.name} is DOWN!` })
