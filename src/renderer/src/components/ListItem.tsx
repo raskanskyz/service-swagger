@@ -15,10 +15,11 @@ function ListItem({ item }): JSX.Element {
   const [version, setVersion] = useState(null)
 
   const queryClient = useQueryClient()
-  const observer = new QueryObserver(queryClient, { queryKey: [item.name] })
+  const observer = new QueryObserver(queryClient, { queryKey: [item.endpoint] })
 
   useEffect(() => {
-    const unsubscribe = observer.subscribe(({ isFetching, isError, isSuccess }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const unsubscribe = observer.subscribe(({ isFetching, isError, isSuccess, data }: any) => {
       if (isError) {
         setStatus('error')
       }
@@ -29,8 +30,8 @@ function ListItem({ item }): JSX.Element {
         setStatus('processing')
       }
 
-      if (version && item.version && version !== item.version) {
-        setVersion(item.version)
+      if (data?.version) {
+        setVersion(data.version)
       }
     })
 
@@ -82,7 +83,7 @@ function ListItem({ item }): JSX.Element {
             </Tooltip>
           </>
         }
-        description={item?.version ?? ''}
+        description={version ?? ''}
       />
       <Switch
         checked={item?.notifyChanges}
