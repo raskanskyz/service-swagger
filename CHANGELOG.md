@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.4](https://github.com/raskanskyz/service-swagger/compare/v1.1.3...v1.1.4) (2024-05-21)
+
+
+### Bug Fixes
+
+* minor changes to support versioning ([fbda43c](https://github.com/raskanskyz/service-swagger/commit/fbda43c73753948dd4917873951cd77665b3acc2))
+
 ### [1.1.3](https://github.com/raskanskyz/service-swagger/compare/v1.1.2...v1.1.3) (2024-04-17)
 
 
