@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.7](https://github.com/raskanskyz/service-swagger/compare/v1.1.6...v1.1.7) (2024-05-22)
+
+
+### Bug Fixes
+
+* build mac only ([1d0cd96](https://github.com/raskanskyz/service-swagger/commit/1d0cd969d6869d51f447942f2e6fbb0213f78a2f))
+
 ### [1.1.6](https://github.com/raskanskyz/service-swagger/compare/v1.1.5...v1.1.6) (2024-05-22)
 
 
