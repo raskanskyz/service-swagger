@@ -147,7 +147,6 @@ ipcMain.on('target:deleted', (event, { item, selectedEnv }) => {
     prevTargets.filter((t) => t.name !== item.name)
   )
 
-  console.log('🚀 DOZI ~ ipcMain.on ~ target:deleted:', store.store)
   event.reply('store:load', store.store)
 })
 
