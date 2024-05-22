@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.6](https://github.com/raskanskyz/service-swagger/compare/v1.1.5...v1.1.6) (2024-05-22)
+
+
+### Bug Fixes
+
+* disable code sign using env var ([42258d8](https://github.com/raskanskyz/service-swagger/commit/42258d8f163678849045f9e67a0905f189218d34))
+* force bump version ([215811a](https://github.com/raskanskyz/service-swagger/commit/215811a90581fbffba3c98c5316017cd4a88e936))
+* version conflict ([c55ab0a](https://github.com/raskanskyz/service-swagger/commit/c55ab0a9fc35160cfa159cbc9420f8fb5a651d69))
+
 ### [1.1.5](https://github.com/raskanskyz/service-swagger/compare/v1.1.4...v1.1.5) (2024-05-22)
 
 
